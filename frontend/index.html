@@ -1,0 +1,1408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>College Resource Hub</title>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lucide-react/0.263.1/lucide-react.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 20px 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .logo h1 {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-size: 2.5rem;
+            font-weight: 800;
+        }
+        
+        .nav-tabs {
+            display: flex;
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .tab-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .tab-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+        }
+        
+        .tab-btn.active {
+            background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+            transform: translateY(-2px);
+        }
+        
+        .main-content {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            min-height: 600px;
+        }
+        
+        .auth-form {
+            max-width: 400px;
+            margin: 0 auto;
+            padding: 40px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e1e5e9;
+            border-radius: 10px;
+            font-size: 14px;
+            transition: border-color 0.3s ease;
+            background: rgba(255, 255, 255, 0.9);
+        }
+        
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 14px 28px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 16px;
+            width: 100%;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+        }
+        
+        .btn-secondary {
+            background: rgba(102, 126, 234, 0.1);
+            color: #667eea;
+            border: 2px solid #667eea;
+            padding: 10px 20px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            margin: 0 10px;
+        }
+        
+        .btn-secondary:hover {
+            background: #667eea;
+            color: white;
+        }
+        
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+        }
+        
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: 10px;
+        }
+        
+        .stat-label {
+            font-size: 1rem;
+            opacity: 0.9;
+        }
+        
+        .resource-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        
+        .resource-card {
+            background: rgba(255, 255, 255, 0.9);
+            border: 2px solid rgba(102, 126, 234, 0.1);
+            border-radius: 15px;
+            padding: 20px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .resource-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+            border-color: #667eea;
+        }
+        
+        .resource-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+            color: #333;
+        }
+        
+        .resource-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            font-size: 0.9rem;
+            color: #666;
+        }
+        
+        .resource-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+        
+        .tag {
+            background: rgba(102, 126, 234, 0.1);
+            color: #667eea;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        
+        .rating-stars {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .star {
+            color: #ffd700;
+            font-size: 1.2rem;
+        }
+        
+        .search-bar {
+            position: relative;
+            margin-bottom: 30px;
+        }
+        
+        .search-input {
+            width: 100%;
+            padding: 15px 20px 15px 50px;
+            border: 2px solid #e1e5e9;
+            border-radius: 25px;
+            font-size: 16px;
+            background: rgba(255, 255, 255, 0.9);
+        }
+        
+        .search-icon {
+            position: absolute;
+            left: 18px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #666;
+        }
+        
+        .filters {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+        
+        .filter-select {
+            padding: 10px 15px;
+            border: 2px solid #e1e5e9;
+            border-radius: 20px;
+            background: rgba(255, 255, 255, 0.9);
+            font-weight: 600;
+        }
+        
+        .upload-area {
+            border: 3px dashed #667eea;
+            border-radius: 20px;
+            padding: 40px;
+            text-align: center;
+            background: rgba(102, 126, 234, 0.05);
+            margin-bottom: 30px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .upload-area:hover {
+            background: rgba(102, 126, 234, 0.1);
+            border-color: #764ba2;
+        }
+        
+        .upload-area.dragover {
+            background: rgba(102, 126, 234, 0.15);
+            border-color: #764ba2;
+        }
+        
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-left: auto;
+        }
+        
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+        }
+        
+        .alert {
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border: 1px solid;
+        }
+        
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border-color: #c3e6cb;
+        }
+        
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+            border-color: #f5c6cb;
+        }
+        
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        
+        .modal {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .modal-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #333;
+        }
+        
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #666;
+        }
+        
+        .rating-input {
+            display: flex;
+            gap: 5px;
+            margin: 15px 0;
+        }
+        
+        .rating-input .star {
+            cursor: pointer;
+            color: #ddd;
+            transition: color 0.3s ease;
+        }
+        
+        .rating-input .star.active {
+            color: #ffd700;
+        }
+        
+        .rating-input .star:hover {
+            color: #ffd700;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+            
+            .header {
+                padding: 15px 20px;
+            }
+            
+            .logo h1 {
+                font-size: 2rem;
+            }
+            
+            .nav-tabs {
+                flex-wrap: wrap;
+                gap: 10px;
+            }
+            
+            .tab-btn {
+                padding: 10px 18px;
+                font-size: 14px;
+            }
+            
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .filters {
+                flex-direction: column;
+            }
+            
+            .user-info {
+                margin-top: 15px;
+                margin-left: 0;
+            }
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+
+        // Mock data for demonstration
+        const mockResources = [
+            {
+                id: 1,
+                title: "Advanced Calculus Notes",
+                description: "Comprehensive notes covering limits, derivatives, and integrals",
+                subject: "Mathematics",
+                semester: "Fall 2024",
+                type: "Notes",
+                author: "John Doe",
+                rating: 4.5,
+                downloads: 245,
+                tags: ["calculus", "derivatives", "integrals"],
+                uploadDate: "2024-09-15"
+            },
+            {
+                id: 2,
+                title: "Physics Past Exam Papers",
+                description: "Collection of past exam papers with solutions",
+                subject: "Physics",
+                semester: "Spring 2024",
+                type: "Exam Paper",
+                author: "Jane Smith",
+                rating: 4.8,
+                downloads: 189,
+                tags: ["physics", "exam", "solutions"],
+                uploadDate: "2024-09-10"
+            },
+            {
+                id: 3,
+                title: "Computer Science Study Guide",
+                description: "Complete study guide for algorithms and data structures",
+                subject: "Computer Science",
+                semester: "Fall 2024",
+                type: "Study Guide",
+                author: "Mike Johnson",
+                rating: 4.3,
+                downloads: 167,
+                tags: ["algorithms", "data-structures", "programming"],
+                uploadDate: "2024-09-08"
+            }
+        ];
+
+        // Main App Component
+        function App() {
+            const [currentUser, setCurrentUser] = useState(null);
+            const [activeTab, setActiveTab] = useState('dashboard');
+            const [resources, setResources] = useState(mockResources);
+            const [searchTerm, setSearchTerm] = useState('');
+            const [selectedSubject, setSelectedSubject] = useState('all');
+            const [selectedSemester, setSelectedSemester] = useState('all');
+            const [selectedType, setSelectedType] = useState('all');
+            const [alert, setAlert] = useState(null);
+            const [showModal, setShowModal] = useState(false);
+            const [selectedResource, setSelectedResource] = useState(null);
+
+            // Auto-dismiss alerts
+            useEffect(() => {
+                if (alert) {
+                    const timer = setTimeout(() => setAlert(null), 5000);
+                    return () => clearTimeout(timer);
+                }
+            }, [alert]);
+
+            // Filter resources
+            const filteredResources = resources.filter(resource => {
+                const matchesSearch = resource.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                                    resource.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                                    resource.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()));
+                const matchesSubject = selectedSubject === 'all' || resource.subject === selectedSubject;
+                const matchesSemester = selectedSemester === 'all' || resource.semester === selectedSemester;
+                const matchesType = selectedType === 'all' || resource.type === selectedType;
+                
+                return matchesSearch && matchesSubject && matchesSemester && matchesType;
+            });
+
+            const showAlert = (message, type = 'success') => {
+                setAlert({ message, type });
+            };
+
+            if (!currentUser) {
+                return <AuthComponent setCurrentUser={setCurrentUser} showAlert={showAlert} />;
+            }
+
+            return (
+                <div className="container fade-in">
+                    <Header 
+                        currentUser={currentUser} 
+                        activeTab={activeTab} 
+                        setActiveTab={setActiveTab}
+                        setCurrentUser={setCurrentUser}
+                    />
+                    
+                    <main className="main-content">
+                        {alert && (
+                            <div className={`alert alert-${alert.type}`}>
+                                {alert.message}
+                            </div>
+                        )}
+                        
+                        {activeTab === 'dashboard' && (
+                            <Dashboard 
+                                resources={resources} 
+                                filteredResources={filteredResources}
+                                setShowModal={setShowModal}
+                                setSelectedResource={setSelectedResource}
+                            />
+                        )}
+                        
+                        {activeTab === 'browse' && (
+                            <Browse 
+                                filteredResources={filteredResources}
+                                searchTerm={searchTerm}
+                                setSearchTerm={setSearchTerm}
+                                selectedSubject={selectedSubject}
+                                setSelectedSubject={setSelectedSubject}
+                                selectedSemester={selectedSemester}
+                                setSelectedSemester={setSelectedSemester}
+                                selectedType={selectedType}
+                                setSelectedType={setSelectedType}
+                                setShowModal={setShowModal}
+                                setSelectedResource={setSelectedResource}
+                            />
+                        )}
+                        
+                        {activeTab === 'upload' && (
+                            <Upload 
+                                resources={resources}
+                                setResources={setResources}
+                                currentUser={currentUser}
+                                showAlert={showAlert}
+                            />
+                        )}
+                    </main>
+
+                    {showModal && selectedResource && (
+                        <ResourceModal 
+                            resource={selectedResource}
+                            setShowModal={setShowModal}
+                            resources={resources}
+                            setResources={setResources}
+                            showAlert={showAlert}
+                        />
+                    )}
+                </div>
+            );
+        }
+
+        // Authentication Component
+        function AuthComponent({ setCurrentUser, showAlert }) {
+            const [isLogin, setIsLogin] = useState(true);
+            const [formData, setFormData] = useState({
+                email: '',
+                password: '',
+                name: '',
+                confirmPassword: ''
+            });
+
+            const handleSubmit = (e) => {
+                e.preventDefault();
+                
+                if (!isLogin && formData.password !== formData.confirmPassword) {
+                    showAlert('Passwords do not match!', 'error');
+                    return;
+                }
+
+                // Mock authentication
+                const user = {
+                    id: 1,
+                    name: formData.name || 'Demo User',
+                    email: formData.email,
+                    role: 'student'
+                };
+
+                setCurrentUser(user);
+                showAlert(`Welcome ${isLogin ? 'back' : ''}, ${user.name}!`);
+            };
+
+            const handleInputChange = (e) => {
+                setFormData({
+                    ...formData,
+                    [e.target.name]: e.target.value
+                });
+            };
+
+            return (
+                <div className="container fade-in">
+                    <div className="header">
+                        <div className="logo">
+                            <div style={{
+                                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                                width: '50px',
+                                height: '50px',
+                                borderRadius: '15px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                color: 'white',
+                                fontSize: '1.5rem',
+                                fontWeight: 'bold'
+                            }}>
+                                LM
+                            </div>
+                            <h1>College Resource Hub</h1>
+                        </div>
+                        <p style={{ color: '#666', fontSize: '1.1rem' }}>
+                            Your gateway to collaborative academic learning
+                        </p>
+                    </div>
+                    
+                    <div className="main-content">
+                        <form className="auth-form" onSubmit={handleSubmit}>
+                            <h2 style={{ textAlign: 'center', marginBottom: '30px', color: '#333' }}>
+                                {isLogin ? 'Welcome Back' : 'Create Account'}
+                            </h2>
+                            
+                            {!isLogin && (
+                                <div className="form-group">
+                                    <label>Full Name</label>
+                                    <input
+                                        type="text"
+                                        name="name"
+                                        value={formData.name}
+                                        onChange={handleInputChange}
+                                        required
+                                        placeholder="Enter your full name"
+                                    />
+                                </div>
+                            )}
+                            
+                            <div className="form-group">
+                                <label>Email</label>
+                                <input
+                                    type="email"
+                                    name="email"
+                                    value={formData.email}
+                                    onChange={handleInputChange}
+                                    required
+                                    placeholder="Enter your email"
+                                />
+                            </div>
+                            
+                            <div className="form-group">
+                                <label>Password</label>
+                                <input
+                                    type="password"
+                                    name="password"
+                                    value={formData.password}
+                                    onChange={handleInputChange}
+                                    required
+                                    placeholder="Enter your password"
+                                />
+                            </div>
+                            
+                            {!isLogin && (
+                                <div className="form-group">
+                                    <label>Confirm Password</label>
+                                    <input
+                                        type="password"
+                                        name="confirmPassword"
+                                        value={formData.confirmPassword}
+                                        onChange={handleInputChange}
+                                        required
+                                        placeholder="Confirm your password"
+                                    />
+                                </div>
+                            )}
+                            
+                            <button type="submit" className="btn-primary">
+                                {isLogin ? 'Sign In' : 'Create Account'}
+                            </button>
+                            
+                            <p style={{ textAlign: 'center', marginTop: '20px' }}>
+                                {isLogin ? "Don't have an account? " : "Already have an account? "}
+                                <button
+                                    type="button"
+                                    onClick={() => setIsLogin(!isLogin)}
+                                    style={{
+                                        background: 'none',
+                                        border: 'none',
+                                        color: '#667eea',
+                                        cursor: 'pointer',
+                                        textDecoration: 'underline',
+                                        fontWeight: '600'
+                                    }}
+                                >
+                                    {isLogin ? 'Sign up' : 'Sign in'}
+                                </button>
+                            </p>
+                        </form>
+                    </div>
+                </div>
+            );
+        }
+
+        // Header Component
+        function Header({ currentUser, activeTab, setActiveTab, setCurrentUser }) {
+            return (
+                <header className="header">
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap' }}>
+                        <div className="logo">
+                            <div style={{
+                                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                                width: '50px',
+                                height: '50px',
+                                borderRadius: '15px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                color: 'white',
+                                fontSize: '1.5rem',
+                                fontWeight: 'bold'
+                            }}>
+                                LM
+                            </div>
+                            <h1>College Resource Hub</h1>
+                        </div>
+                        
+                        <div className="user-info">
+                            <div className="user-avatar">
+                                {currentUser.name.split(' ').map(n => n[0]).join('').toUpperCase()}
+                            </div>
+                            <span style={{ fontWeight: '600', color: '#333' }}>{currentUser.name}</span>
+                            <button
+                                onClick={() => setCurrentUser(null)}
+                                className="btn-secondary"
+                                style={{ marginLeft: '10px' }}
+                            >
+                                Logout
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <nav className="nav-tabs">
+                        <button
+                            className={`tab-btn ${activeTab === 'dashboard' ? 'active' : ''}`}
+                            onClick={() => setActiveTab('dashboard')}
+                        >
+                            Dashboard
+                        </button>
+                        <button
+                            className={`tab-btn ${activeTab === 'browse' ? 'active' : ''}`}
+                            onClick={() => setActiveTab('browse')}
+                        >
+                            Browse Resources
+                        </button>
+                        <button
+                            className={`tab-btn ${activeTab === 'upload' ? 'active' : ''}`}
+                            onClick={() => setActiveTab('upload')}
+                        >
+                            Upload Resource
+                        </button>
+                    </nav>
+                </header>
+            );
+        }
+
+        // Dashboard Component
+        function Dashboard({ resources, filteredResources, setShowModal, setSelectedResource }) {
+            const topRatedResources = resources.sort((a, b) => b.rating - a.rating).slice(0, 3);
+            const recentResources = resources.sort((a, b) => new Date(b.uploadDate) - new Date(a.uploadDate)).slice(0, 3);
+
+            return (
+                <div className="fade-in">
+                    <h2 style={{ marginBottom: '30px', color: '#333', fontSize: '2rem' }}>Dashboard</h2>
+                    
+                    <div className="dashboard-grid">
+                        <div className="stat-card">
+                            <div className="stat-number">{resources.length}</div>
+                            <div className="stat-label">Total Resources</div>
+                        </div>
+                        <div className="stat-card">
+                            <div className="stat-number">{resources.reduce((sum, r) => sum + r.downloads, 0)}</div>
+                            <div className="stat-label">Total Downloads</div>
+                        </div>
+                        <div className="stat-card">
+                            <div className="stat-number">{(resources.reduce((sum, r) => sum + r.rating, 0) / resources.length).toFixed(1)}</div>
+                            <div className="stat-label">Average Rating</div>
+                        </div>
+                    </div>
+
+                    <h3 style={{ marginBottom: '20px', color: '#333' }}>Top Rated Resources</h3>
+                    <div className="resource-grid" style={{ marginBottom: '40px' }}>
+                        {topRatedResources.map(resource => (
+                            <ResourceCard
+                                key={resource.id}
+                                resource={resource}
+                                setShowModal={setShowModal}
+                                setSelectedResource={setSelectedResource}
+                            />
+                        ))}
+                    </div>
+
+                    <h3 style={{ marginBottom: '20px', color: '#333' }}>Recently Added</h3>
+                    <div className="resource-grid">
+                        {recentResources.map(resource => (
+                            <ResourceCard
+                                key={resource.id}
+                                resource={resource}
+                                setShowModal={setShowModal}
+                                setSelectedResource={setSelectedResource}
+                            />
+                        ))}
+                    </div>
+                </div>
+            );
+        }
+
+        // Browse Component
+        function Browse({ 
+            filteredResources, 
+            searchTerm, 
+            setSearchTerm, 
+            selectedSubject, 
+            setSelectedSubject,
+            selectedSemester,
+            setSelectedSemester,
+            selectedType,
+            setSelectedType,
+            setShowModal,
+            setSelectedResource
+        }) {
+            return (
+                <div className="fade-in">
+                    <h2 style={{ marginBottom: '30px', color: '#333', fontSize: '2rem' }}>Browse Resources</h2>
+                    
+                    <div className="search-bar">
+                        <span className="search-icon">🔍</span>
+                        <input
+                            type="text"
+                            className="search-input"
+                            placeholder="Search resources, tags, or descriptions..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                        />
+                    </div>
+
+                    <div className="filters">
+                        <select 
+                            className="filter-select" 
+                            value={selectedSubject} 
+                            onChange={(e) => setSelectedSubject(e.target.value)}
+                        >
+                            <option value="all">All Subjects</option>
+                            <option value="Mathematics">Mathematics</option>
+                            <option value="Physics">Physics</option>
+                            <option value="Computer Science">Computer Science</option>
+                            <option value="Chemistry">Chemistry</option>
+                            <option value="Biology">Biology</option>
+                        </select>
+                        
+                        <select 
+                            className="filter-select" 
+                            value={selectedSemester} 
+                            onChange={(e) => setSelectedSemester(e.target.value)}
+                        >
+                            <option value="all">All Semesters</option>
+                            <option value="Spring 2024">Spring 2024</option>
+                            <option value="Fall 2024">Fall 2024</option>
+                            <option value="Spring 2025">Spring 2025</option>
+                        </select>
+                        
+                        <select 
+                            className="filter-select" 
+                            value={selectedType} 
+                            onChange={(e) => setSelectedType(e.target.value)}
+                        >
+                            <option value="all">All Types</option>
+                            <option value="Notes">Notes</option>
+                            <option value="Exam Paper">Exam Papers</option>
+                            <option value="Study Guide">Study Guides</option>
+                            <option value="Assignment">Assignments</option>
+                        </select>
+                    </div>
+
+                    <div style={{ marginBottom: '20px', color: '#666' }}>
+                        Showing {filteredResources.length} resources
+                    </div>
+
+                    <div className="resource-grid">
+                        {filteredResources.map(resource => (
+                            <ResourceCard
+                                key={resource.id}
+                                resource={resource}
+                                setShowModal={setShowModal}
+                                setSelectedResource={setSelectedResource}
+                            />
+                        ))}
+                    </div>
+
+                    {filteredResources.length === 0 && (
+                        <div style={{ 
+                            textAlign: 'center', 
+                            padding: '60px 20px',
+                            color: '#666'
+                        }}>
+                            <div style={{ fontSize: '3rem', marginBottom: '20px' }}>📚</div>
+                            <h3>No resources found</h3>
+                            <p>Try adjusting your search criteria or filters</p>
+                        </div>
+                    )}
+                </div>
+            );
+        }
+
+        // Upload Component
+        function Upload({ resources, setResources, currentUser, showAlert }) {
+            const [formData, setFormData] = useState({
+                title: '',
+                description: '',
+                subject: '',
+                semester: '',
+                type: '',
+                tags: ''
+            });
+            const [dragOver, setDragOver] = useState(false);
+            const [selectedFile, setSelectedFile] = useState(null);
+            const fileInputRef = useRef();
+
+            const handleInputChange = (e) => {
+                setFormData({
+                    ...formData,
+                    [e.target.name]: e.target.value
+                });
+            };
+
+            const handleFileSelect = (file) => {
+                if (file) {
+                    setSelectedFile(file);
+                    if (!formData.title) {
+                        setFormData(prev => ({
+                            ...prev,
+                            title: file.name.replace(/\.[^/.]+$/, "")
+                        }));
+                    }
+                }
+            };
+
+            const handleDragOver = (e) => {
+                e.preventDefault();
+                setDragOver(true);
+            };
+
+            const handleDragLeave = (e) => {
+                e.preventDefault();
+                setDragOver(false);
+            };
+
+            const handleDrop = (e) => {
+                e.preventDefault();
+                setDragOver(false);
+                const files = Array.from(e.dataTransfer.files);
+                if (files.length > 0) {
+                    handleFileSelect(files[0]);
+                }
+            };
+
+            const handleSubmit = (e) => {
+                e.preventDefault();
+                
+                if (!selectedFile) {
+                    showAlert('Please select a file to upload', 'error');
+                    return;
+                }
+
+                const newResource = {
+                    id: resources.length + 1,
+                    title: formData.title,
+                    description: formData.description,
+                    subject: formData.subject,
+                    semester: formData.semester,
+                    type: formData.type,
+                    author: currentUser.name,
+                    rating: 0,
+                    downloads: 0,
+                    tags: formData.tags.split(',').map(tag => tag.trim().toLowerCase()),
+                    uploadDate: new Date().toISOString().split('T')[0],
+                    fileName: selectedFile.name,
+                    fileSize: selectedFile.size
+                };
+
+                setResources([...resources, newResource]);
+                
+                // Reset form
+                setFormData({
+                    title: '',
+                    description: '',
+                    subject: '',
+                    semester: '',
+                    type: '',
+                    tags: ''
+                });
+                setSelectedFile(null);
+                
+                showAlert('Resource uploaded successfully!');
+            };
+
+            return (
+                <div className="fade-in">
+                    <h2 style={{ marginBottom: '30px', color: '#333', fontSize: '2rem' }}>Upload Resource</h2>
+                    
+                    <form onSubmit={handleSubmit}>
+                        <div 
+                            className={`upload-area ${dragOver ? 'dragover' : ''}`}
+                            onDragOver={handleDragOver}
+                            onDragLeave={handleDragLeave}
+                            onDrop={handleDrop}
+                            onClick={() => fileInputRef.current?.click()}
+                        >
+                            <input
+                                type="file"
+                                ref={fileInputRef}
+                                style={{ display: 'none' }}
+                                onChange={(e) => handleFileSelect(e.target.files[0])}
+                                accept=".pdf,.doc,.docx,.ppt,.pptx,.txt"
+                            />
+                            
+                            {selectedFile ? (
+                                <div>
+                                    <div style={{ fontSize: '2rem', marginBottom: '10px' }}>📄</div>
+                                    <h3>{selectedFile.name}</h3>
+                                    <p>Size: {(selectedFile.size / 1024 / 1024).toFixed(2)} MB</p>
+                                    <p style={{ color: '#667eea', marginTop: '10px' }}>Click to change file</p>
+                                </div>
+                            ) : (
+                                <div>
+                                    <div style={{ fontSize: '3rem', marginBottom: '20px' }}>📁</div>
+                                    <h3>Drop your file here or click to browse</h3>
+                                    <p>Supports PDF, DOC, DOCX, PPT, PPTX, TXT files</p>
+                                </div>
+                            )}
+                        </div>
+
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px' }}>
+                            <div className="form-group">
+                                <label>Title *</label>
+                                <input
+                                    type="text"
+                                    name="title"
+                                    value={formData.title}
+                                    onChange={handleInputChange}
+                                    required
+                                    placeholder="Enter resource title"
+                                />
+                            </div>
+
+                            <div className="form-group">
+                                <label>Subject *</label>
+                                <select
+                                    name="subject"
+                                    value={formData.subject}
+                                    onChange={handleInputChange}
+                                    required
+                                >
+                                    <option value="">Select Subject</option>
+                                    <option value="Mathematics">Mathematics</option>
+                                    <option value="Physics">Physics</option>
+                                    <option value="Computer Science">Computer Science</option>
+                                    <option value="Chemistry">Chemistry</option>
+                                    <option value="Biology">Biology</option>
+                                </select>
+                            </div>
+
+                            <div className="form-group">
+                                <label>Semester *</label>
+                                <select
+                                    name="semester"
+                                    value={formData.semester}
+                                    onChange={handleInputChange}
+                                    required
+                                >
+                                    <option value="">Select Semester</option>
+                                    <option value="Spring 2024">Spring 2024</option>
+                                    <option value="Fall 2024">Fall 2024</option>
+                                    <option value="Spring 2025">Spring 2025</option>
+                                </select>
+                            </div>
+
+                            <div className="form-group">
+                                <label>Type *</label>
+                                <select
+                                    name="type"
+                                    value={formData.type}
+                                    onChange={handleInputChange}
+                                    required
+                                >
+                                    <option value="">Select Type</option>
+                                    <option value="Notes">Notes</option>
+                                    <option value="Exam Paper">Exam Paper</option>
+                                    <option value="Study Guide">Study Guide</option>
+                                    <option value="Assignment">Assignment</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div className="form-group">
+                            <label>Description *</label>
+                            <textarea
+                                name="description"
+                                value={formData.description}
+                                onChange={handleInputChange}
+                                required
+                                placeholder="Provide a detailed description of the resource"
+                                rows="4"
+                            />
+                        </div>
+
+                        <div className="form-group">
+                            <label>Tags (comma-separated)</label>
+                            <input
+                                type="text"
+                                name="tags"
+                                value={formData.tags}
+                                onChange={handleInputChange}
+                                placeholder="e.g. calculus, derivatives, integrals"
+                            />
+                        </div>
+
+                        <button type="submit" className="btn-primary">
+                            Upload Resource
+                        </button>
+                    </form>
+                </div>
+            );
+        }
+
+        // Resource Card Component
+        function ResourceCard({ resource, setShowModal, setSelectedResource }) {
+            const handleClick = () => {
+                setSelectedResource(resource);
+                setShowModal(true);
+            };
+
+            return (
+                <div className="resource-card" onClick={handleClick}>
+                    <div className="resource-title">{resource.title}</div>
+                    
+                    <div className="resource-meta">
+                        <span>{resource.author}</span>
+                        <span>{resource.uploadDate}</span>
+                    </div>
+                    
+                    <p style={{ color: '#666', marginBottom: '15px', fontSize: '0.9rem' }}>
+                        {resource.description}
+                    </p>
+                    
+                    <div className="resource-tags">
+                        {resource.tags.map((tag, index) => (
+                            <span key={index} className="tag">{tag}</span>
+                        ))}
+                    </div>
+                    
+                    <div style={{ 
+                        display: 'flex', 
+                        justifyContent: 'space-between', 
+                        alignItems: 'center',
+                        marginTop: '15px'
+                    }}>
+                        <div className="rating-stars">
+                            {[1, 2, 3, 4, 5].map(star => (
+                                <span 
+                                    key={star} 
+                                    className="star"
+                                    style={{ 
+                                        color: star <= resource.rating ? '#ffd700' : '#ddd' 
+                                    }}
+                                >
+                                    ★
+                                </span>
+                            ))}
+                            <span style={{ marginLeft: '8px', color: '#666' }}>
+                                ({resource.rating.toFixed(1)})
+                            </span>
+                        </div>
+                        
+                        <div style={{ color: '#666', fontSize: '0.9rem' }}>
+                            {resource.downloads} downloads
+                        </div>
+                    </div>
+                    
+                    <div style={{ 
+                        display: 'flex', 
+                        gap: '10px', 
+                        marginTop: '15px',
+                        fontSize: '0.8rem',
+                        color: '#888'
+                    }}>
+                        <span>{resource.subject}</span>
+                        <span>•</span>
+                        <span>{resource.semester}</span>
+                        <span>•</span>
+                        <span>{resource.type}</span>
+                    </div>
+                </div>
+            );
+        }
+
+        // Resource Modal Component
+        function ResourceModal({ resource, setShowModal, resources, setResources, showAlert }) {
+            const [userRating, setUserRating] = useState(0);
+            const [feedback, setFeedback] = useState('');
+
+            const handleDownload = () => {
+                // Simulate download
+                const updatedResources = resources.map(r => 
+                    r.id === resource.id 
+                        ? { ...r, downloads: r.downloads + 1 }
+                        : r
+                );
+                setResources(updatedResources);
+                showAlert(`Downloaded "${resource.title}" successfully!`);
+            };
+
+            const handleRateResource = () => {
+                if (userRating === 0) {
+                    showAlert('Please select a rating', 'error');
+                    return;
+                }
+
+                // Update resource rating (simplified - in real app would be more complex)
+                const updatedResources = resources.map(r => 
+                    r.id === resource.id 
+                        ? { ...r, rating: ((r.rating + userRating) / 2) }
+                        : r
+                );
+                setResources(updatedResources);
+                showAlert('Thank you for your rating!');
+                setUserRating(0);
+                setFeedback('');
+            };
+
+            return (
+                <div className="modal-overlay" onClick={() => setShowModal(false)}>
+                    <div className="modal" onClick={(e) => e.stopPropagation()}>
+                        <div className="modal-header">
+                            <h3 className="modal-title">{resource.title}</h3>
+                            <button 
+                                className="close-btn"
+                                onClick={() => setShowModal(false)}
+                            >
+                                ×
+                            </button>
+                        </div>
+                        
+                        <div style={{ marginBottom: '20px' }}>
+                            <p><strong>Author:</strong> {resource.author}</p>
+                            <p><strong>Subject:</strong> {resource.subject}</p>
+                            <p><strong>Semester:</strong> {resource.semester}</p>
+                            <p><strong>Type:</strong> {resource.type}</p>
+                            <p><strong>Upload Date:</strong> {resource.uploadDate}</p>
+                        </div>
+                        
+                        <div style={{ marginBottom: '20px' }}>
+                            <h4>Description</h4>
+                            <p>{resource.description}</p>
+                        </div>
+                        
+                        <div style={{ marginBottom: '20px' }}>
+                            <h4>Tags</h4>
+                            <div className="resource-tags">
+                                {resource.tags.map((tag, index) => (
+                                    <span key={index} className="tag">{tag}</span>
+                                ))}
+                            </div>
+                        </div>
+                        
+                        <div style={{ marginBottom: '20px' }}>
+                            <div className="rating-stars">
+                                Current Rating: 
+                                {[1, 2, 3, 4, 5].map(star => (
+                                    <span 
+                                        key={star} 
+                                        className="star"
+                                        style={{ 
+                                            color: star <= resource.rating ? '#ffd700' : '#ddd' 
+                                        }}
+                                    >
+                                        ★
+                                    </span>
+                                ))}
+                                <span style={{ marginLeft: '8px' }}>
+                                    ({resource.rating.toFixed(1)}) • {resource.downloads} downloads
+                                </span>
+                            </div>
+                        </div>
+                        
+                        <div style={{ marginBottom: '20px' }}>
+                            <h4>Rate this resource</h4>
+                            <div className="rating-input">
+                                {[1, 2, 3, 4, 5].map(star => (
+                                    <span
+                                        key={star}
+                                        className={`star ${star <= userRating ? 'active' : ''}`}
+                                        onClick={() => setUserRating(star)}
+                                    >
+                                        ★
+                                    </span>
+                                ))}
+                            </div>
+                            
+                            <textarea
+                                placeholder="Leave your feedback (optional)"
+                                value={feedback}
+                                onChange={(e) => setFeedback(e.target.value)}
+                                rows="3"
+                                style={{ 
+                                    width: '100%', 
+                                    marginTop: '10px',
+                                    padding: '10px',
+                                    border: '2px solid #e1e5e9',
+                                    borderRadius: '8px'
+                                }}
+                            />
+                        </div>
+                        
+                        <div style={{ 
+                            display: 'flex', 
+                            gap: '15px',
+                            justifyContent: 'flex-end'
+                        }}>
+                            <button 
+                                className="btn-secondary"
+                                onClick={handleRateResource}
+                            >
+                                Submit Rating
+                            </button>
+                            <button 
+                                className="btn-primary"
+                                onClick={handleDownload}
+                            >
+                                Download Resource
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        // Render the app
+        ReactDOM.render(<App />, document.getElementById('root'));
+    </script>
+</body>
+</html>
