@@ -7,7 +7,6 @@
     <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/lucide-react/0.263.1/lucide-react.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -56,6 +55,7 @@
             display: flex;
             gap: 20px;
             margin-top: 20px;
+            flex-wrap: wrap;
         }
         
         .tab-btn {
@@ -137,9 +137,14 @@
             box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
         }
         
-        .btn-primary:hover {
+        .btn-primary:hover:not(:disabled) {
             transform: translateY(-2px);
             box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+        }
+        
+        .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
         }
         
         .btn-secondary {
@@ -151,7 +156,6 @@
             cursor: pointer;
             font-weight: 600;
             transition: all 0.3s ease;
-            margin: 0 10px;
         }
         
         .btn-secondary:hover {
@@ -161,7 +165,7 @@
         
         .dashboard-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
             gap: 20px;
             margin-bottom: 30px;
         }
@@ -199,6 +203,7 @@
             padding: 20px;
             transition: all 0.3s ease;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            cursor: pointer;
         }
         
         .resource-card:hover {
@@ -262,6 +267,12 @@
             border-radius: 25px;
             font-size: 16px;
             background: rgba(255, 255, 255, 0.9);
+        }
+        
+        .search-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
         }
         
         .search-icon {
@@ -346,68 +357,25 @@
             border-color: #f5c6cb;
         }
         
-        .modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.7);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-        }
-        
-        .modal {
-            background: white;
-            border-radius: 20px;
-            padding: 30px;
-            max-width: 500px;
-            width: 90%;
-            max-height: 80vh;
-            overflow-y: auto;
-        }
-        
-        .modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-        }
-        
-        .modal-title {
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: #333;
-        }
-        
-        .close-btn {
-            background: none;
-            border: none;
-            font-size: 1.5rem;
-            cursor: pointer;
+        .loading {
+            text-align: center;
+            padding: 40px;
             color: #666;
         }
         
-        .rating-input {
-            display: flex;
-            gap: 5px;
-            margin: 15px 0;
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
         }
         
-        .rating-input .star {
-            cursor: pointer;
-            color: #ddd;
-            transition: color 0.3s ease;
-        }
-        
-        .rating-input .star.active {
-            color: #ffd700;
-        }
-        
-        .rating-input .star:hover {
-            color: #ffd700;
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
         
         @media (max-width: 768px) {
@@ -463,63 +431,119 @@
     <script type="text/babel">
         const { useState, useEffect, useRef } = React;
 
-        // Mock data for demonstration
-        const mockResources = [
-            {
-                id: 1,
-                title: "Advanced Calculus Notes",
-                description: "Comprehensive notes covering limits, derivatives, and integrals",
-                subject: "Mathematics",
-                semester: "Fall 2024",
-                type: "Notes",
-                author: "John Doe",
-                rating: 4.5,
-                downloads: 245,
-                tags: ["calculus", "derivatives", "integrals"],
-                uploadDate: "2024-09-15"
+        // API Configuration
+        const API_BASE_URL = 'http://localhost:5000/api';
+        const API_ENDPOINTS = {
+            auth: {
+                login: '/auth/login',
+                register: '/auth/register',
+                profile: '/auth/profile'
             },
-            {
-                id: 2,
-                title: "Physics Past Exam Papers",
-                description: "Collection of past exam papers with solutions",
-                subject: "Physics",
-                semester: "Spring 2024",
-                type: "Exam Paper",
-                author: "Jane Smith",
-                rating: 4.8,
-                downloads: 189,
-                tags: ["physics", "exam", "solutions"],
-                uploadDate: "2024-09-10"
+            resources: {
+                list: '/resources',
+                upload: '/resources',
+                download: (id) => `/resources/${id}/download`,
+                rate: (id) => `/resources/${id}/rate`,
+                stats: '/resources/stats',
+                topRated: '/resources/top-rated',
+                recent: '/resources/recent'
             },
-            {
-                id: 3,
-                title: "Computer Science Study Guide",
-                description: "Complete study guide for algorithms and data structures",
-                subject: "Computer Science",
-                semester: "Fall 2024",
-                type: "Study Guide",
-                author: "Mike Johnson",
-                rating: 4.3,
-                downloads: 167,
-                tags: ["algorithms", "data-structures", "programming"],
-                uploadDate: "2024-09-08"
+            users: {
+                dashboard: '/users/dashboard',
+                subjects: '/users/subjects',
+                myResources: '/users/my-resources'
             }
-        ];
+        };
+
+        // API Helper Functions
+        const api = {
+            async request(endpoint, options = {}) {
+                const url = `${API_BASE_URL}${endpoint}`;
+                const token = localStorage.getItem('token');
+                
+                const config = {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...(token && { Authorization: `Bearer ${token}` }),
+                        ...options.headers
+                    },
+                    ...options
+                };
+
+                try {
+                    const response = await fetch(url, config);
+                    const data = await response.json();
+                    
+                    if (!response.ok) {
+                        throw new Error(data.message || 'API request failed');
+                    }
+                    
+                    return data;
+                } catch (error) {
+                    console.error('API Error:', error);
+                    throw error;
+                }
+            },
+
+            async get(endpoint) {
+                return this.request(endpoint, { method: 'GET' });
+            },
+
+            async post(endpoint, body) {
+                return this.request(endpoint, {
+                    method: 'POST',
+                    body: JSON.stringify(body)
+                });
+            },
+
+            async upload(endpoint, formData) {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+                    method: 'POST',
+                    headers: {
+                        ...(token && { Authorization: `Bearer ${token}` })
+                    },
+                    body: formData
+                });
+                
+                const data = await response.json();
+                if (!response.ok) {
+                    throw new Error(data.message || 'Upload failed');
+                }
+                
+                return data;
+            }
+        };
 
         // Main App Component
         function App() {
             const [currentUser, setCurrentUser] = useState(null);
             const [activeTab, setActiveTab] = useState('dashboard');
-            const [resources, setResources] = useState(mockResources);
-            const [searchTerm, setSearchTerm] = useState('');
-            const [selectedSubject, setSelectedSubject] = useState('all');
-            const [selectedSemester, setSelectedSemester] = useState('all');
-            const [selectedType, setSelectedType] = useState('all');
+            const [resources, setResources] = useState([]);
+            const [loading, setLoading] = useState(true);
             const [alert, setAlert] = useState(null);
-            const [showModal, setShowModal] = useState(false);
-            const [selectedResource, setSelectedResource] = useState(null);
 
-            // Auto-dismiss alerts
+            useEffect(() => {
+                checkAuthStatus();
+            }, []);
+
+            const checkAuthStatus = async () => {
+                const token = localStorage.getItem('token');
+                if (token) {
+                    try {
+                        const response = await api.get(API_ENDPOINTS.auth.profile);
+                        setCurrentUser(response.data.user);
+                    } catch (error) {
+                        localStorage.removeItem('token');
+                    }
+                }
+                setLoading(false);
+            };
+
+            const showAlert = (message, type = 'success') => {
+                setAlert({ message, type });
+            };
+
             useEffect(() => {
                 if (alert) {
                     const timer = setTimeout(() => setAlert(null), 5000);
@@ -527,21 +551,18 @@
                 }
             }, [alert]);
 
-            // Filter resources
-            const filteredResources = resources.filter(resource => {
-                const matchesSearch = resource.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                                    resource.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                                    resource.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()));
-                const matchesSubject = selectedSubject === 'all' || resource.subject === selectedSubject;
-                const matchesSemester = selectedSemester === 'all' || resource.semester === selectedSemester;
-                const matchesType = selectedType === 'all' || resource.type === selectedType;
-                
-                return matchesSearch && matchesSubject && matchesSemester && matchesType;
-            });
-
-            const showAlert = (message, type = 'success') => {
-                setAlert({ message, type });
-            };
+            if (loading) {
+                return (
+                    <div className="container">
+                        <div className="main-content">
+                            <div className="loading">
+                                <div className="spinner"></div>
+                                <p>Loading...</p>
+                            </div>
+                        </div>
+                    </div>
+                );
+            }
 
             if (!currentUser) {
                 return <AuthComponent setCurrentUser={setCurrentUser} showAlert={showAlert} />;
@@ -564,49 +585,17 @@
                         )}
                         
                         {activeTab === 'dashboard' && (
-                            <Dashboard 
-                                resources={resources} 
-                                filteredResources={filteredResources}
-                                setShowModal={setShowModal}
-                                setSelectedResource={setSelectedResource}
-                            />
+                            <Dashboard showAlert={showAlert} />
                         )}
                         
                         {activeTab === 'browse' && (
-                            <Browse 
-                                filteredResources={filteredResources}
-                                searchTerm={searchTerm}
-                                setSearchTerm={setSearchTerm}
-                                selectedSubject={selectedSubject}
-                                setSelectedSubject={setSelectedSubject}
-                                selectedSemester={selectedSemester}
-                                setSelectedSemester={setSelectedSemester}
-                                selectedType={selectedType}
-                                setSelectedType={setSelectedType}
-                                setShowModal={setShowModal}
-                                setSelectedResource={setSelectedResource}
-                            />
+                            <Browse showAlert={showAlert} />
                         )}
                         
                         {activeTab === 'upload' && (
-                            <Upload 
-                                resources={resources}
-                                setResources={setResources}
-                                currentUser={currentUser}
-                                showAlert={showAlert}
-                            />
+                            <Upload currentUser={currentUser} showAlert={showAlert} />
                         )}
                     </main>
-
-                    {showModal && selectedResource && (
-                        <ResourceModal 
-                            resource={selectedResource}
-                            setShowModal={setShowModal}
-                            resources={resources}
-                            setResources={setResources}
-                            showAlert={showAlert}
-                        />
-                    )}
                 </div>
             );
         }
@@ -620,25 +609,33 @@
                 name: '',
                 confirmPassword: ''
             });
+            const [loading, setLoading] = useState(false);
 
-            const handleSubmit = (e) => {
+            const handleSubmit = async (e) => {
                 e.preventDefault();
-                
-                if (!isLogin && formData.password !== formData.confirmPassword) {
-                    showAlert('Passwords do not match!', 'error');
-                    return;
+                setLoading(true);
+
+                try {
+                    if (!isLogin && formData.password !== formData.confirmPassword) {
+                        throw new Error('Passwords do not match!');
+                    }
+
+                    const endpoint = isLogin ? API_ENDPOINTS.auth.login : API_ENDPOINTS.auth.register;
+                    const payload = isLogin 
+                        ? { email: formData.email, password: formData.password }
+                        : { name: formData.name, email: formData.email, password: formData.password };
+
+                    const response = await api.post(endpoint, payload);
+                    
+                    localStorage.setItem('token', response.data.token);
+                    setCurrentUser(response.data.user);
+                    showAlert(`Welcome ${isLogin ? 'back' : ''}, ${response.data.user.name}!`);
+
+                } catch (error) {
+                    showAlert(error.message, 'error');
+                } finally {
+                    setLoading(false);
                 }
-
-                // Mock authentication
-                const user = {
-                    id: 1,
-                    name: formData.name || 'Demo User',
-                    email: formData.email,
-                    role: 'student'
-                };
-
-                setCurrentUser(user);
-                showAlert(`Welcome ${isLogin ? 'back' : ''}, ${user.name}!`);
             };
 
             const handleInputChange = (e) => {
@@ -664,7 +661,7 @@
                                 fontSize: '1.5rem',
                                 fontWeight: 'bold'
                             }}>
-                                LM
+                                📚
                             </div>
                             <h1>College Resource Hub</h1>
                         </div>
@@ -689,6 +686,7 @@
                                         onChange={handleInputChange}
                                         required
                                         placeholder="Enter your full name"
+                                        disabled={loading}
                                     />
                                 </div>
                             )}
@@ -702,6 +700,7 @@
                                     onChange={handleInputChange}
                                     required
                                     placeholder="Enter your email"
+                                    disabled={loading}
                                 />
                             </div>
                             
@@ -714,6 +713,7 @@
                                     onChange={handleInputChange}
                                     required
                                     placeholder="Enter your password"
+                                    disabled={loading}
                                 />
                             </div>
                             
@@ -727,12 +727,13 @@
                                         onChange={handleInputChange}
                                         required
                                         placeholder="Confirm your password"
+                                        disabled={loading}
                                     />
                                 </div>
                             )}
                             
-                            <button type="submit" className="btn-primary">
-                                {isLogin ? 'Sign In' : 'Create Account'}
+                            <button type="submit" className="btn-primary" disabled={loading}>
+                                {loading ? 'Please wait...' : (isLogin ? 'Sign In' : 'Create Account')}
                             </button>
                             
                             <p style={{ textAlign: 'center', marginTop: '20px' }}>
@@ -748,6 +749,7 @@
                                         textDecoration: 'underline',
                                         fontWeight: '600'
                                     }}
+                                    disabled={loading}
                                 >
                                     {isLogin ? 'Sign up' : 'Sign in'}
                                 </button>
@@ -760,6 +762,11 @@
 
         // Header Component
         function Header({ currentUser, activeTab, setActiveTab, setCurrentUser }) {
+            const handleLogout = () => {
+                localStorage.removeItem('token');
+                setCurrentUser(null);
+            };
+
             return (
                 <header className="header">
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap' }}>
@@ -776,7 +783,7 @@
                                 fontSize: '1.5rem',
                                 fontWeight: 'bold'
                             }}>
-                                LM
+                                📚
                             </div>
                             <h1>College Resource Hub</h1>
                         </div>
@@ -787,7 +794,7 @@
                             </div>
                             <span style={{ fontWeight: '600', color: '#333' }}>{currentUser.name}</span>
                             <button
-                                onClick={() => setCurrentUser(null)}
+                                onClick={handleLogout}
                                 className="btn-secondary"
                                 style={{ marginLeft: '10px' }}
                             >
@@ -821,9 +828,42 @@
         }
 
         // Dashboard Component
-        function Dashboard({ resources, filteredResources, setShowModal, setSelectedResource }) {
-            const topRatedResources = resources.sort((a, b) => b.rating - a.rating).slice(0, 3);
-            const recentResources = resources.sort((a, b) => new Date(b.uploadDate) - new Date(a.uploadDate)).slice(0, 3);
+        function Dashboard({ showAlert }) {
+            const [stats, setStats] = useState(null);
+            const [recentResources, setRecentResources] = useState([]);
+            const [topRatedResources, setTopRatedResources] = useState([]);
+            const [loading, setLoading] = useState(true);
+
+            useEffect(() => {
+                loadDashboardData();
+            }, []);
+
+            const loadDashboardData = async () => {
+                try {
+                    const [dashboardStats, recent, topRated] = await Promise.all([
+                        api.get(API_ENDPOINTS.users.dashboard),
+                        api.get(`${API_ENDPOINTS.resources.recent}?limit=3`),
+                        api.get(`${API_ENDPOINTS.resources.topRated}?limit=3`)
+                    ]);
+
+                    setStats(dashboardStats.data.stats);
+                    setRecentResources(recent.data.resources);
+                    setTopRatedResources(topRated.data.resources);
+                } catch (error) {
+                    showAlert('Error loading dashboard data', 'error');
+                } finally {
+                    setLoading(false);
+                }
+            };
+
+            if (loading) {
+                return (
+                    <div className="loading">
+                        <div className="spinner"></div>
+                        <p>Loading dashboard...</p>
+                    </div>
+                );
+            }
 
             return (
                 <div className="fade-in">
@@ -831,40 +871,34 @@
                     
                     <div className="dashboard-grid">
                         <div className="stat-card">
-                            <div className="stat-number">{resources.length}</div>
-                            <div className="stat-label">Total Resources</div>
+                            <div className="stat-number">{stats?.uploadedResources || 0}</div>
+                            <div className="stat-label">Your Resources</div>
                         </div>
                         <div className="stat-card">
-                            <div className="stat-number">{resources.reduce((sum, r) => sum + r.downloads, 0)}</div>
+                            <div className="stat-number">{stats?.totalDownloads || 0}</div>
                             <div className="stat-label">Total Downloads</div>
                         </div>
                         <div className="stat-card">
-                            <div className="stat-number">{(resources.reduce((sum, r) => sum + r.rating, 0) / resources.length).toFixed(1)}</div>
-                            <div className="stat-label">Average Rating</div>
+                            <div className="stat-number">{stats?.ratingsGiven || 0}</div>
+                            <div className="stat-label">Ratings Given</div>
+                        </div>
+                        <div className="stat-card">
+                            <div className="stat-number">{stats?.averageRating || 0}</div>
+                            <div className="stat-label">Your Avg Rating</div>
                         </div>
                     </div>
 
-                    <h3 style={{ marginBottom: '20px', color: '#333' }}>Top Rated Resources</h3>
+                    <h3 style={{ marginBottom: '20px', color: '#333' }}>Recent Resources</h3>
                     <div className="resource-grid" style={{ marginBottom: '40px' }}>
-                        {topRatedResources.map(resource => (
-                            <ResourceCard
-                                key={resource.id}
-                                resource={resource}
-                                setShowModal={setShowModal}
-                                setSelectedResource={setSelectedResource}
-                            />
+                        {recentResources.map(resource => (
+                            <ResourceCard key={resource._id} resource={resource} />
                         ))}
                     </div>
 
-                    <h3 style={{ marginBottom: '20px', color: '#333' }}>Recently Added</h3>
+                    <h3 style={{ marginBottom: '20px', color: '#333' }}>Top Rated Resources</h3>
                     <div className="resource-grid">
-                        {recentResources.map(resource => (
-                            <ResourceCard
-                                key={resource.id}
-                                resource={resource}
-                                setShowModal={setShowModal}
-                                setSelectedResource={setSelectedResource}
-                            />
+                        {topRatedResources.map(resource => (
+                            <ResourceCard key={resource._id} resource={resource} />
                         ))}
                     </div>
                 </div>
@@ -872,19 +906,44 @@
         }
 
         // Browse Component
-        function Browse({ 
-            filteredResources, 
-            searchTerm, 
-            setSearchTerm, 
-            selectedSubject, 
-            setSelectedSubject,
-            selectedSemester,
-            setSelectedSemester,
-            selectedType,
-            setSelectedType,
-            setShowModal,
-            setSelectedResource
-        }) {
+        function Browse({ showAlert }) {
+            const [resources, setResources] = useState([]);
+            const [loading, setLoading] = useState(true);
+            const [searchTerm, setSearchTerm] = useState('');
+            const [filters, setFilters] = useState({
+                subject: 'all',
+                semester: 'all',
+                type: 'all'
+            });
+
+            useEffect(() => {
+                loadResources();
+            }, [searchTerm, filters]);
+
+            const loadResources = async () => {
+                try {
+                    const params = new URLSearchParams();
+                    if (searchTerm) params.append('search', searchTerm);
+                    if (filters.subject !== 'all') params.append('subject', filters.subject);
+                    if (filters.semester !== 'all') params.append('semester', filters.semester);
+                    if (filters.type !== 'all') params.append('type', filters.type);
+
+                    const response = await api.get(`${API_ENDPOINTS.resources.list}?${params}`);
+                    setResources(response.data.resources);
+                } catch (error) {
+                    showAlert('Error loading resources', 'error');
+                } finally {
+                    setLoading(false);
+                }
+            };
+
+            const handleFilterChange = (filterType, value) => {
+                setFilters(prev => ({
+                    ...prev,
+                    [filterType]: value
+                }));
+            };
+
             return (
                 <div className="fade-in">
                     <h2 style={{ marginBottom: '30px', color: '#333', fontSize: '2rem' }}>Browse Resources</h2>
@@ -903,8 +962,8 @@
                     <div className="filters">
                         <select 
                             className="filter-select" 
-                            value={selectedSubject} 
-                            onChange={(e) => setSelectedSubject(e.target.value)}
+                            value={filters.subject} 
+                            onChange={(e) => handleFilterChange('subject', e.target.value)}
                         >
                             <option value="all">All Subjects</option>
                             <option value="Mathematics">Mathematics</option>
@@ -912,12 +971,15 @@
                             <option value="Computer Science">Computer Science</option>
                             <option value="Chemistry">Chemistry</option>
                             <option value="Biology">Biology</option>
+                            <option value="Engineering">Engineering</option>
+                            <option value="Business">Business</option>
+                            <option value="Arts">Arts</option>
                         </select>
                         
                         <select 
                             className="filter-select" 
-                            value={selectedSemester} 
-                            onChange={(e) => setSelectedSemester(e.target.value)}
+                            value={filters.semester} 
+                            onChange={(e) => handleFilterChange('semester', e.target.value)}
                         >
                             <option value="all">All Semesters</option>
                             <option value="Spring 2024">Spring 2024</option>
@@ -927,49 +989,54 @@
                         
                         <select 
                             className="filter-select" 
-                            value={selectedType} 
-                            onChange={(e) => setSelectedType(e.target.value)}
+                            value={filters.type} 
+                            onChange={(e) => handleFilterChange('type', e.target.value)}
                         >
                             <option value="all">All Types</option>
                             <option value="Notes">Notes</option>
                             <option value="Exam Paper">Exam Papers</option>
                             <option value="Study Guide">Study Guides</option>
                             <option value="Assignment">Assignments</option>
+                            <option value="Presentation">Presentations</option>
                         </select>
                     </div>
 
-                    <div style={{ marginBottom: '20px', color: '#666' }}>
-                        Showing {filteredResources.length} resources
-                    </div>
-
-                    <div className="resource-grid">
-                        {filteredResources.map(resource => (
-                            <ResourceCard
-                                key={resource.id}
-                                resource={resource}
-                                setShowModal={setShowModal}
-                                setSelectedResource={setSelectedResource}
-                            />
-                        ))}
-                    </div>
-
-                    {filteredResources.length === 0 && (
-                        <div style={{ 
-                            textAlign: 'center', 
-                            padding: '60px 20px',
-                            color: '#666'
-                        }}>
-                            <div style={{ fontSize: '3rem', marginBottom: '20px' }}>📚</div>
-                            <h3>No resources found</h3>
-                            <p>Try adjusting your search criteria or filters</p>
+                    {loading ? (
+                        <div className="loading">
+                            <div className="spinner"></div>
+                            <p>Loading resources...</p>
                         </div>
+                    ) : (
+                        <>
+                            <div style={{ marginBottom: '20px', color: '#666' }}>
+                                Showing {resources.length} resources
+                            </div>
+
+                            <div className="resource-grid">
+                                {resources.map(resource => (
+                                    <ResourceCard key={resource._id} resource={resource} />
+                                ))}
+                            </div>
+
+                            {resources.length === 0 && (
+                                <div style={{ 
+                                    textAlign: 'center', 
+                                    padding: '60px 20px',
+                                    color: '#666'
+                                }}>
+                                    <div style={{ fontSize: '3rem', marginBottom: '20px' }}>📚</div>
+                                    <h3>No resources found</h3>
+                                    <p>Try adjusting your search criteria or filters</p>
+                                </div>
+                            )}
+                        </>
                     )}
                 </div>
             );
         }
 
         // Upload Component
-        function Upload({ resources, setResources, currentUser, showAlert }) {
+        function Upload({ currentUser, showAlert }) {
             const [formData, setFormData] = useState({
                 title: '',
                 description: '',
@@ -978,8 +1045,9 @@
                 type: '',
                 tags: ''
             });
-            const [dragOver, setDragOver] = useState(false);
             const [selectedFile, setSelectedFile] = useState(null);
+            const [dragOver, setDragOver] = useState(false);
+            const [uploading, setUploading] = useState(false);
             const fileInputRef = useRef();
 
             const handleInputChange = (e) => {
@@ -1020,44 +1088,41 @@
                 }
             };
 
-            const handleSubmit = (e) => {
+            const handleSubmit = async (e) => {
                 e.preventDefault();
-                
-                if (!selectedFile) {
-                    showAlert('Please select a file to upload', 'error');
-                    return;
+                setUploading(true);
+
+                try {
+                    if (!selectedFile) {
+                        throw new Error('Please select a file to upload');
+                    }
+
+                    const uploadFormData = new FormData();
+                    uploadFormData.append('file', selectedFile);
+                    Object.keys(formData).forEach(key => {
+                        uploadFormData.append(key, formData[key]);
+                    });
+
+                    await api.upload(API_ENDPOINTS.resources.upload, uploadFormData);
+                    
+                    // Reset form
+                    setFormData({
+                        title: '',
+                        description: '',
+                        subject: '',
+                        semester: '',
+                        type: '',
+                        tags: ''
+                    });
+                    setSelectedFile(null);
+                    
+                    showAlert('Resource uploaded successfully!');
+
+                } catch (error) {
+                    showAlert(error.message, 'error');
+                } finally {
+                    setUploading(false);
                 }
-
-                const newResource = {
-                    id: resources.length + 1,
-                    title: formData.title,
-                    description: formData.description,
-                    subject: formData.subject,
-                    semester: formData.semester,
-                    type: formData.type,
-                    author: currentUser.name,
-                    rating: 0,
-                    downloads: 0,
-                    tags: formData.tags.split(',').map(tag => tag.trim().toLowerCase()),
-                    uploadDate: new Date().toISOString().split('T')[0],
-                    fileName: selectedFile.name,
-                    fileSize: selectedFile.size
-                };
-
-                setResources([...resources, newResource]);
-                
-                // Reset form
-                setFormData({
-                    title: '',
-                    description: '',
-                    subject: '',
-                    semester: '',
-                    type: '',
-                    tags: ''
-                });
-                setSelectedFile(null);
-                
-                showAlert('Resource uploaded successfully!');
             };
 
             return (
@@ -1106,6 +1171,7 @@
                                     onChange={handleInputChange}
                                     required
                                     placeholder="Enter resource title"
+                                    disabled={uploading}
                                 />
                             </div>
 
@@ -1116,6 +1182,7 @@
                                     value={formData.subject}
                                     onChange={handleInputChange}
                                     required
+                                    disabled={uploading}
                                 >
                                     <option value="">Select Subject</option>
                                     <option value="Mathematics">Mathematics</option>
@@ -1123,6 +1190,9 @@
                                     <option value="Computer Science">Computer Science</option>
                                     <option value="Chemistry">Chemistry</option>
                                     <option value="Biology">Biology</option>
+                                    <option value="Engineering">Engineering</option>
+                                    <option value="Business">Business</option>
+                                    <option value="Arts">Arts</option>
                                 </select>
                             </div>
 
@@ -1133,6 +1203,7 @@
                                     value={formData.semester}
                                     onChange={handleInputChange}
                                     required
+                                    disabled={uploading}
                                 >
                                     <option value="">Select Semester</option>
                                     <option value="Spring 2024">Spring 2024</option>
@@ -1148,12 +1219,14 @@
                                     value={formData.type}
                                     onChange={handleInputChange}
                                     required
+                                    disabled={uploading}
                                 >
                                     <option value="">Select Type</option>
                                     <option value="Notes">Notes</option>
                                     <option value="Exam Paper">Exam Paper</option>
                                     <option value="Study Guide">Study Guide</option>
                                     <option value="Assignment">Assignment</option>
+                                    <option value="Presentation">Presentation</option>
                                 </select>
                             </div>
                         </div>
@@ -1167,6 +1240,7 @@
                                 required
                                 placeholder="Provide a detailed description of the resource"
                                 rows="4"
+                                disabled={uploading}
                             />
                         </div>
 
@@ -1178,11 +1252,12 @@
                                 value={formData.tags}
                                 onChange={handleInputChange}
                                 placeholder="e.g. calculus, derivatives, integrals"
+                                disabled={uploading}
                             />
                         </div>
 
-                        <button type="submit" className="btn-primary">
-                            Upload Resource
+                        <button type="submit" className="btn-primary" disabled={uploading}>
+                            {uploading ? 'Uploading...' : 'Upload Resource'}
                         </button>
                     </form>
                 </div>
@@ -1190,30 +1265,27 @@
         }
 
         // Resource Card Component
-        function ResourceCard({ resource, setShowModal, setSelectedResource }) {
-            const handleClick = () => {
-                setSelectedResource(resource);
-                setShowModal(true);
-            };
-
+        function ResourceCard({ resource }) {
             return (
-                <div className="resource-card" onClick={handleClick}>
+                <div className="resource-card">
                     <div className="resource-title">{resource.title}</div>
                     
                     <div className="resource-meta">
-                        <span>{resource.author}</span>
-                        <span>{resource.uploadDate}</span>
+                        <span>{resource.author?.name || 'Unknown'}</span>
+                        <span>{new Date(resource.createdAt).toLocaleDateString()}</span>
                     </div>
                     
                     <p style={{ color: '#666', marginBottom: '15px', fontSize: '0.9rem' }}>
                         {resource.description}
                     </p>
                     
-                    <div className="resource-tags">
-                        {resource.tags.map((tag, index) => (
-                            <span key={index} className="tag">{tag}</span>
-                        ))}
-                    </div>
+                    {resource.tags && resource.tags.length > 0 && (
+                        <div className="resource-tags">
+                            {resource.tags.map((tag, index) => (
+                                <span key={index} className="tag">{tag}</span>
+                            ))}
+                        </div>
+                    )}
                     
                     <div style={{ 
                         display: 'flex', 
@@ -1227,19 +1299,19 @@
                                     key={star} 
                                     className="star"
                                     style={{ 
-                                        color: star <= resource.rating ? '#ffd700' : '#ddd' 
+                                        color: star <= (resource.averageRating || 0) ? '#ffd700' : '#ddd' 
                                     }}
                                 >
                                     ★
                                 </span>
                             ))}
                             <span style={{ marginLeft: '8px', color: '#666' }}>
-                                ({resource.rating.toFixed(1)})
+                                ({(resource.averageRating || 0).toFixed(1)})
                             </span>
                         </div>
                         
                         <div style={{ color: '#666', fontSize: '0.9rem' }}>
-                            {resource.downloads} downloads
+                            {resource.downloadCount || 0} downloads
                         </div>
                     </div>
                     
@@ -1255,147 +1327,6 @@
                         <span>{resource.semester}</span>
                         <span>•</span>
                         <span>{resource.type}</span>
-                    </div>
-                </div>
-            );
-        }
-
-        // Resource Modal Component
-        function ResourceModal({ resource, setShowModal, resources, setResources, showAlert }) {
-            const [userRating, setUserRating] = useState(0);
-            const [feedback, setFeedback] = useState('');
-
-            const handleDownload = () => {
-                // Simulate download
-                const updatedResources = resources.map(r => 
-                    r.id === resource.id 
-                        ? { ...r, downloads: r.downloads + 1 }
-                        : r
-                );
-                setResources(updatedResources);
-                showAlert(`Downloaded "${resource.title}" successfully!`);
-            };
-
-            const handleRateResource = () => {
-                if (userRating === 0) {
-                    showAlert('Please select a rating', 'error');
-                    return;
-                }
-
-                // Update resource rating (simplified - in real app would be more complex)
-                const updatedResources = resources.map(r => 
-                    r.id === resource.id 
-                        ? { ...r, rating: ((r.rating + userRating) / 2) }
-                        : r
-                );
-                setResources(updatedResources);
-                showAlert('Thank you for your rating!');
-                setUserRating(0);
-                setFeedback('');
-            };
-
-            return (
-                <div className="modal-overlay" onClick={() => setShowModal(false)}>
-                    <div className="modal" onClick={(e) => e.stopPropagation()}>
-                        <div className="modal-header">
-                            <h3 className="modal-title">{resource.title}</h3>
-                            <button 
-                                className="close-btn"
-                                onClick={() => setShowModal(false)}
-                            >
-                                ×
-                            </button>
-                        </div>
-                        
-                        <div style={{ marginBottom: '20px' }}>
-                            <p><strong>Author:</strong> {resource.author}</p>
-                            <p><strong>Subject:</strong> {resource.subject}</p>
-                            <p><strong>Semester:</strong> {resource.semester}</p>
-                            <p><strong>Type:</strong> {resource.type}</p>
-                            <p><strong>Upload Date:</strong> {resource.uploadDate}</p>
-                        </div>
-                        
-                        <div style={{ marginBottom: '20px' }}>
-                            <h4>Description</h4>
-                            <p>{resource.description}</p>
-                        </div>
-                        
-                        <div style={{ marginBottom: '20px' }}>
-                            <h4>Tags</h4>
-                            <div className="resource-tags">
-                                {resource.tags.map((tag, index) => (
-                                    <span key={index} className="tag">{tag}</span>
-                                ))}
-                            </div>
-                        </div>
-                        
-                        <div style={{ marginBottom: '20px' }}>
-                            <div className="rating-stars">
-                                Current Rating: 
-                                {[1, 2, 3, 4, 5].map(star => (
-                                    <span 
-                                        key={star} 
-                                        className="star"
-                                        style={{ 
-                                            color: star <= resource.rating ? '#ffd700' : '#ddd' 
-                                        }}
-                                    >
-                                        ★
-                                    </span>
-                                ))}
-                                <span style={{ marginLeft: '8px' }}>
-                                    ({resource.rating.toFixed(1)}) • {resource.downloads} downloads
-                                </span>
-                            </div>
-                        </div>
-                        
-                        <div style={{ marginBottom: '20px' }}>
-                            <h4>Rate this resource</h4>
-                            <div className="rating-input">
-                                {[1, 2, 3, 4, 5].map(star => (
-                                    <span
-                                        key={star}
-                                        className={`star ${star <= userRating ? 'active' : ''}`}
-                                        onClick={() => setUserRating(star)}
-                                    >
-                                        ★
-                                    </span>
-                                ))}
-                            </div>
-                            
-                            <textarea
-                                placeholder="Leave your feedback (optional)"
-                                value={feedback}
-                                onChange={(e) => setFeedback(e.target.value)}
-                                rows="3"
-                                style={{ 
-                                    width: '100%', 
-                                    marginTop: '10px',
-                                    padding: '10px',
-                                    border: '2px solid #e1e5e9',
-                                    borderRadius: '8px'
-                                }}
-                            />
-                        </div>
-                        
-                        <div style={{ 
-                            display: 'flex', 
-                            gap: '15px',
-                            justifyContent: 'flex-end'
-                        }}>
-                            <button 
-                                className="btn-secondary"
-                                onClick={handleRateResource}
-                            >
-                                Submit Rating
-                            </button>
-                            <button 
-                                className="btn-primary"
-                                onClick={handleDownload}
-                            >
-                                Download Resource
-                            </button>
-                        </div>
                     </div>
                 </div>
             );

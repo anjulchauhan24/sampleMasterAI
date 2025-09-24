@@ -33,9 +33,10 @@ if (!fs.existsSync(resourcesDir)) {
   fs.mkdirSync(resourcesDir, { recursive: true });
 }
 
-// Security middleware
+// Security middleware - simplified for development
 app.use(helmet({
-  crossOriginResourcePolicy: false, // Allow file downloads
+  crossOriginResourcePolicy: { policy: "cross-origin" },
+  contentSecurityPolicy: false, // Disable for development
 }));
 
 // Compression middleware
@@ -43,60 +44,45 @@ app.use(compression());
 
 // Rate limiting
 const limiter = rateLimit({
-  windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000, // 15 minutes
-  max: parseInt(process.env.RATE_LIMIT_MAX) || 100, // limit each IP to 100 requests per windowMs
+  windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000,
+  max: parseInt(process.env.RATE_LIMIT_MAX) || 100,
   message: {
     success: false,
     message: 'Too many requests from this IP, please try again later.'
   },
   standardHeaders: true,
   legacyHeaders: false,
-});
-
-// Stricter rate limiting for auth endpoints
-const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 5, // limit each IP to 5 requests per windowMs
-  message: {
-    success: false,
-    message: 'Too many authentication attempts from this IP, please try again later.'
+  skip: (req) => {
+    return req.url.startsWith('/uploads/');
   }
 });
 
-// File upload rate limiting
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  message: {
+    success: false,
+    message: 'Too many authentication attempts from this IP, please try again later.'
+  },
+  skipSuccessfulRequests: true,
+});
+
 const uploadLimiter = rateLimit({
-  windowMs: 60 * 60 * 1000, // 1 hour
-  max: 10, // limit each IP to 10 uploads per hour
+  windowMs: 60 * 60 * 1000,
+  max: 20,
   message: {
     success: false,
     message: 'Too many file uploads from this IP, please try again later.'
   }
 });
 
-app.use(limiter);
-
-// CORS configuration
-const corsOptions = {
-  origin: function (origin, callback) {
-    // Allow requests with no origin (like mobile apps or curl requests)
-    if (!origin) return callback(null, true);
-    
-    const allowedOrigins = process.env.CORS_ORIGIN 
-      ? process.env.CORS_ORIGIN.split(',')
-      : ['http://localhost:3000', 'http://localhost:3001'];
-    
-    if (allowedOrigins.indexOf(origin) !== -1) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
+// CORS configuration - Allow all for development
+app.use(cors({
+  origin: true, // Allow all origins in development
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-};
-
-app.use(cors(corsOptions));
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+}));
 
 // Body parsing middleware
 app.use(express.json({ limit: '10mb' }));
@@ -104,15 +90,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Static file serving for uploads
 app.use('/uploads', express.static(path.join(__dirname, 'uploads'), {
-  maxAge: '1d', // Cache for 1 day
-  setHeaders: (res, path) => {
-    // Set appropriate headers for file downloads
-    if (path.endsWith('.pdf')) {
-      res.setHeader('Content-Type', 'application/pdf');
-    } else if (path.endsWith('.doc') || path.endsWith('.docx')) {
-      res.setHeader('Content-Type', 'application/msword');
-    }
-  }
+  maxAge: '1d'
 }));
 
 // Request logging middleware (development)
@@ -123,20 +101,15 @@ if (process.env.NODE_ENV === 'development') {
   });
 }
 
-// Routes
-app.use('/api/auth', authLimiter, authRoutes);
-app.use('/api/resources', uploadLimiter, resourceRoutes);
-app.use('/api/ratings', ratingRoutes);
-app.use('/api/users', userRoutes);
-
-// Health check endpoint
+// Health check endpoint (before other routes)
 app.get('/api/health', (req, res) => {
   res.json({
     success: true,
     message: 'Server is running',
     timestamp: new Date().toISOString(),
     environment: process.env.NODE_ENV || 'development',
-    version: '1.0.0'
+    version: '1.0.0',
+    uptime: process.uptime()
   });
 });
 
@@ -147,86 +120,74 @@ app.get('/api', (req, res) => {
     message: 'College Resource Hub API',
     version: '1.0.0',
     endpoints: {
-      auth: {
-        'POST /api/auth/register': 'Register a new user',
-        'POST /api/auth/login': 'Login user',
-        'GET /api/auth/profile': 'Get user profile (auth required)',
-        'PUT /api/auth/profile': 'Update user profile (auth required)',
-        'POST /api/auth/change-password': 'Change password (auth required)',
-        'POST /api/auth/verify-token': 'Verify JWT token (auth required)',
-        'POST /api/auth/logout': 'Logout user (auth required)'
-      },
-      resources: {
-        'GET /api/resources': 'Get all resources with filtering',
-        'GET /api/resources/:id': 'Get single resource',
-        'POST /api/resources': 'Upload new resource (auth required)',
-        'PUT /api/resources/:id': 'Update resource (auth required)',
-        'DELETE /api/resources/:id': 'Delete resource (auth required)',
-        'GET /api/resources/:id/download': 'Download resource (auth required)',
-        'GET /api/resources/top-rated': 'Get top rated resources',
-        'GET /api/resources/most-downloaded': 'Get most downloaded resources',
-        'GET /api/resources/recent': 'Get recent resources'
-      },
-      ratings: {
-        'POST /api/ratings': 'Rate a resource (auth required)',
-        'GET /api/ratings/resource/:resourceId': 'Get ratings for resource',
-        'GET /api/ratings/user/:userId': 'Get user ratings',
-        'GET /api/ratings/my-ratings': 'Get current user ratings (auth required)',
-        'PUT /api/ratings/:id': 'Update rating (auth required)',
-        'DELETE /api/ratings/:id': 'Delete rating (auth required)',
-        'POST /api/ratings/:id/helpful': 'Mark rating as helpful (auth required)',
-        'POST /api/ratings/:id/report': 'Report rating (auth required)'
-      },
-      users: {
-        'GET /api/users/dashboard': 'Get dashboard stats (auth required)',
-        'GET /api/users/my-resources': 'Get user resources (auth required)',
-        'GET /api/users/subjects': 'Get all subjects',
-        'GET /api/users/semesters': 'Get all semesters',
-        'GET /api/users/resource-types': 'Get all resource types',
-        'GET /api/users/profile/:userId': 'Get public user profile',
-        'GET /api/users/leaderboard': 'Get user leaderboard'
-      },
-      utility: {
-        'GET /api/health': 'Health check',
-        'GET /api': 'API documentation'
-      }
+      'GET /api/health': 'Health check',
+      'POST /api/auth/register': 'Register a new user',
+      'POST /api/auth/login': 'Login user',
+      'GET /api/resources': 'Get all resources',
+      'POST /api/resources': 'Upload new resource (auth required)',
+      'POST /api/ratings': 'Rate a resource (auth required)',
+      'GET /api/users/dashboard': 'Get dashboard stats (auth required)',
     }
   });
 });
 
-// 404 handler for API routes
-app.use((req, res, next) => {
-  if (req.path.startsWith('/api')) {
-    res.status(404).json({
-      success: false,
-      message: 'API endpoint not found',
-      requestedPath: req.originalUrl
-    });
-  } else {
-    next();
-  }
-});
+// Routes with rate limiting applied individually
+app.use('/api/auth', authLimiter, authRoutes);
+app.use('/api/resources', uploadLimiter, resourceRoutes);
+app.use('/api/ratings', limiter, ratingRoutes);
+app.use('/api/users', limiter, userRoutes);
 
-// Serve static files from frontend build (if exists)
-if (fs.existsSync(path.join(__dirname, '../frontend/build'))) {
-  app.use(express.static(path.join(__dirname, '../frontend/build')));
+// Serve static frontend files
+const frontendBuildPath = path.join(__dirname, 'public');
+if (fs.existsSync(frontendBuildPath)) {
+  app.use(express.static(frontendBuildPath));
   
-  // Handle React Router (return all non-api requests to React app)
-  app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, '../frontend/build', 'index.html'));
+  // Handle React Router - serve index.html for non-API routes
+  app.get('/', (req, res) => {
+    res.sendFile(path.join(frontendBuildPath, 'index.html'));
   });
 }
+
+// Handle 404 for API routes - specific middleware without wildcards
+app.use((req, res, next) => {
+  if (req.path.startsWith('/api/') && !res.headersSent) {
+    return res.status(404).json({
+      success: false,
+      message: 'API endpoint not found',
+      requestedPath: req.originalUrl,
+      availableEndpoints: [
+        'GET /api',
+        'GET /api/health',
+        'POST /api/auth/register',
+        'POST /api/auth/login',
+        'GET /api/resources',
+        'POST /api/resources',
+        'POST /api/ratings',
+        'GET /api/users/dashboard'
+      ]
+    });
+  }
+  next();
+});
 
 // Global error handling middleware
 app.use((error, req, res, next) => {
   console.error('Global error handler:', error);
+
+  // Don't send error if response already sent
+  if (res.headersSent) {
+    return next(error);
+  }
 
   // Handle different types of errors
   if (error.name === 'ValidationError') {
     return res.status(400).json({
       success: false,
       message: 'Validation error',
-      errors: Object.values(error.errors).map(err => err.message)
+      errors: Object.values(error.errors).map(err => ({
+        field: err.path,
+        message: err.message
+      }))
     });
   }
 
@@ -269,31 +230,12 @@ app.use((error, req, res, next) => {
 // Handle unhandled promise rejections
 process.on('unhandledRejection', (err, promise) => {
   console.error('Unhandled Promise Rejection:', err);
-  // Close server & exit process
-  server.close(() => {
-    process.exit(1);
-  });
 });
 
 // Handle uncaught exceptions
 process.on('uncaughtException', (err) => {
   console.error('Uncaught Exception:', err);
   process.exit(1);
-});
-
-// Graceful shutdown
-process.on('SIGTERM', () => {
-  console.log('SIGTERM received. Shutting down gracefully...');
-  server.close(() => {
-    console.log('Process terminated');
-  });
-});
-
-process.on('SIGINT', () => {
-  console.log('SIGINT received. Shutting down gracefully...');
-  server.close(() => {
-    console.log('Process terminated');
-  });
 });
 
 // Start server
@@ -303,11 +245,37 @@ const server = app.listen(PORT, () => {
   console.log('=====================================');
   console.log(`📡 Server running on port ${PORT}`);
   console.log(`🌐 Environment: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`💾 Database: ${process.env.MONGODB_URI ? 'Connected' : 'Local MongoDB'}`);
+  console.log(`💾 Database: ${process.env.MONGODB_URI ? 'MongoDB configured' : 'Local MongoDB'}`);
   console.log('=====================================');
   console.log(`📋 API Documentation: http://localhost:${PORT}/api`);
   console.log(`❤️  Health Check: http://localhost:${PORT}/api/health`);
+  console.log(`📁 Frontend: http://localhost:${PORT}`);
   console.log('=====================================');
+  
+  if (process.env.NODE_ENV === 'development') {
+    console.log('🔧 Development mode - detailed logging enabled');
+    console.log(`📂 Uploads directory: ${path.join(__dirname, 'uploads')}`);
+    console.log('=====================================');
+  }
+});
+
+// Graceful shutdown
+process.on('SIGTERM', () => {
+  console.log('SIGTERM received. Shutting down gracefully...');
+  if (server) {
+    server.close(() => {
+      console.log('Process terminated');
+    });
+  }
+});
+
+process.on('SIGINT', () => {
+  console.log('SIGINT received. Shutting down gracefully...');
+  if (server) {
+    server.close(() => {
+      console.log('Process terminated');
+    });
+  }
 });
 
 module.exports = app;
